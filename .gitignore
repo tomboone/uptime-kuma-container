@@ -1,0 +1,18 @@
+# OpenTofu / Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.auto.tfvars
+*.secret.tfvars
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+.idea
+
+settings.local.json

@@ -1,0 +1,39 @@
+{
+  "name": "uptime-kuma-infra",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  "features": {
+    // Docker inside the dev container — build/test the Kuma image locally
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+
+    // Azure CLI for ad-hoc commands, login context for OpenTofu
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+
+    // GitHub CLI — useful for testing actions, managing secrets
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+
+    // Node 22 — required for Claude Code
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "containerEnv": {
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
+  },
+
+  "mounts": [
+    // Persist shell history across rebuilds
+    "source=uptime-kuma-infra-bashhistory,target=/commandhistory,type=volume",
+    // SSH keys for git
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly"
+  ],
+
+  "customizations": {
+    "jetbrains": {
+      "plugins": []
+    }
+  }
+}

@@ -1,0 +1,45 @@
+version: "3"
+
+vars:
+  IMAGE_NAME: uptime-kuma
+  CONTAINER_NAME: uptime-kuma-local
+
+tasks:
+  build:
+    desc: Build the Docker image locally
+    cmds:
+      - docker build -t {{.IMAGE_NAME}} .
+
+  run:
+    desc: Run the container locally
+    deps: [build]
+    cmds:
+      - docker run -d --name {{.CONTAINER_NAME}} -p 3001:3001 -v uptime-kuma-data:/app/data {{.IMAGE_NAME}}
+
+  stop:
+    desc: Stop and remove the local container
+    cmds:
+      - docker rm -f {{.CONTAINER_NAME}}
+
+  logs:
+    desc: Tail logs from the local container
+    cmds:
+      - docker logs -f {{.CONTAINER_NAME}}
+
+  tofu-init:
+    desc: Initialize OpenTofu
+    dir: infra
+    cmds:
+      - tofu init -backend-config=backend.hcl
+
+  tofu-plan:
+    desc: Run OpenTofu plan
+    dir: infra
+    cmds:
+      - tofu plan
+
+  tofu-apply:
+    desc: Apply OpenTofu changes
+    dir: infra
+    cmds:
+      - tofu apply
