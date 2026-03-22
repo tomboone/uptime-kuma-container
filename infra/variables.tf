@@ -11,8 +11,13 @@ variable "location" {
   default     = "eastus"
 }
 
-variable "app_service_plan_id" {
-  description = "Resource ID of the existing App Service Plan"
+variable "app_service_plan_name" {
+  description = "Name of the existing App Service Plan"
+  type        = string
+}
+
+variable "app_service_plan_resource_group" {
+  description = "Resource group containing the existing App Service Plan"
   type        = string
 }
 
