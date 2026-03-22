@@ -1,4 +1,4 @@
 resource_group_name  = "rg-tbc-app-services"
 storage_account_name = "tbcterraformstate"
 container_name       = "tfstate"
-key                  = "uptime-kuma.tfstate"
+key                  = "uptime-kuma-container.tfstate"
