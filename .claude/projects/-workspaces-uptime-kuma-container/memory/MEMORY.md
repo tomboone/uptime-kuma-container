@@ -1,0 +1,1 @@
+- [user_azure_region.md](user_azure_region.md) — User runs everything in eastus2
