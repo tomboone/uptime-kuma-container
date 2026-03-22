@@ -1,5 +1,5 @@
 resource "azurerm_linux_web_app" "this" {
-  name                = "app-uptime-kuma"
+  name                = "app-uptime-kuma-tbc"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
   service_plan_id     = var.app_service_plan_id
