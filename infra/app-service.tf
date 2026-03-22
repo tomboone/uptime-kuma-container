@@ -6,7 +6,7 @@ data "azurerm_service_plan" "this" {
 resource "azurerm_linux_web_app" "this" {
   name                = "app-uptime-kuma-tbc"
   resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
+  location            = data.azurerm_service_plan.this.location
   service_plan_id     = data.azurerm_service_plan.this.id
 
   site_config {
