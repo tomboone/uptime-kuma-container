@@ -41,7 +41,9 @@ docker compose up -d
    `127.0.0.1:3002`.
 
 **Push URLs from jobs on this host** use `http://127.0.0.1:3002/api/push/<token>`, not the tailnet URL,
-because the host is on no tailnet.
+because the host is on no tailnet. **Push URLs from other containers** use `http://uptime-kuma:3001/api/push/<token>`
+over the `kuma-push` network, which this stack creates. The other stack declares it `external`. The weekly movie
+email does this.
 
 ## Backup
 
