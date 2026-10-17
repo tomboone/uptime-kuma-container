@@ -83,3 +83,15 @@ reported broken B-tree pages in one table. `sqlite3 .recover` (3.54.0) rebuilt a
 pages held the history after that, and `.recover` put 157,335 unparented rows in `lost_and_found`.
 That table was dropped, so history from 2026-06-18 to 2026-10-17 is gone. The last good heartbeat
 suggests the database had been corrupt since mid-June.
+
+**Cutover.** The recovered database went to `/mnt/music/uptime-kuma-personal/kuma.db`, with
+*Primary Base URL* set to `https://kuma.tail1afe5a.ts.net`.
+
+- **Up and clean.** Kuma reached `(healthy)` with no `SQLITE_CORRUPT`. Within a minute all six HTTP
+  monitors recorded `200 - OK` heartbeats.
+- **Tailnet.** The sidecar joined the personal tailnet as `kuma` (`100.113.69.20`), and its certificate
+  was issued at 19:41:31Z. `TS_AUTHKEY` was then blanked.
+- **Push.** `kumadrome/navidrome-backup` (monitor 8) got its first-ever heartbeat from the Navidrome
+  backup job over `127.0.0.1:3002`. Its earlier pushes never fired; see the navidrome repo's log.
+- **Azure.** The App Service `app-uptime-kuma-tbc` was **stopped**, not deleted. Its resources,
+  including the corrupt share, stay until the retirement is confirmed.
