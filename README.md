@@ -45,8 +45,11 @@ because the host is on no tailnet.
 
 ## Backup
 
-Everything is in `KUMA_DATA_DIR`, chiefly `kuma.db`. SQLite's online backup API makes a consistent copy
-while Kuma runs:
+Everything is in `KUMA_DATA_DIR`, chiefly `kuma.db`. **Nightly:** the B2 job in `tomboone/navidrome`
+(`backup/navidrome-backup.sh`, `KUMA_DB`) takes an online-backup copy at about 04:00. The copy is
+integrity-checked and gzipped into `/mnt/music/uptime-kuma-personal-backups` (14 days kept) and synced
+to `b2:tomboone-music-backup/kuma-personal-backups`. **By hand**, SQLite's online backup API makes a
+consistent copy while Kuma runs:
 
 ```bash
 sqlite3 /mnt/music/uptime-kuma-personal/kuma.db ".backup '/mnt/music/kuma-personal-$(date +%F).db'"
