@@ -1,0 +1,56 @@
+# Personal Uptime Kuma on kumadrome, the home server. Deploy and operate per README.md.
+# Not the business Kuma (neuroticsasquat-ch/ops, monitoring/uptime-kuma/), which runs beside it.
+name: kuma-personal
+
+services:
+  # Own Tailscale node on the personal tailnet; the host itself is on no tailnet. Serves Kuma over
+  # HTTPS at https://kuma.<tailnet>.ts.net (tailscale/serve.json). Kuma keeps its own network, so a
+  # sidecar restart only interrupts tailnet access.
+  tailscale:
+    image: tailscale/tailscale:stable
+    container_name: kuma-personal-tailscale
+    # Not "uptime-kuma": Docker maps a container's own hostname to itself in /etc/hosts, so the proxy
+    # to http://uptime-kuma:3001 would dial the sidecar. The tailnet name is TS_HOSTNAME.
+    hostname: kuma-personal-tailscale
+    restart: unless-stopped
+    environment:
+      TS_HOSTNAME: kuma
+      # One-time auth key from the personal tailnet. Blank it once the state directory holds the node key.
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_AUTH_ONCE: "true"
+      TS_EXTRA_ARGS: ${TS_EXTRA_ARGS:-}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      # The directory, not the file, so a git pull that replaces serve.json reaches the sidecar.
+      - ./tailscale:/config:ro
+      - type: bind
+        source: ${TS_STATE_HOST_DIR:?set TS_STATE_HOST_DIR in .env}
+        target: /var/lib/tailscale
+        bind:
+          create_host_path: false
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: kuma-personal
+    restart: unless-stopped
+    volumes:
+      # SQLite on the local USB drive. Never a network share: on Azure Files (SMB) it corrupted.
+      # create_host_path: false refuses to start, rather than start empty, if the drive is not mounted.
+      - type: bind
+        source: ${KUMA_DATA_DIR:?set KUMA_DATA_DIR in .env}
+        target: /app/data
+        bind:
+          create_host_path: false
+    ports:
+      # Loopback only, for jobs on the host (push monitors). 3002, because the business Kuma has 3001.
+      - "127.0.0.1:3002:3001"
+    environment:
+      TZ: ${TZ:-America/New_York}
+    healthcheck:
+      test: ["CMD-SHELL", "extra/healthcheck"]
+      interval: 60s
+      timeout: 30s
+      start_period: 180s
+      retries: 5
