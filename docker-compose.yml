@@ -48,9 +48,19 @@ services:
       - "127.0.0.1:3002:3001"
     environment:
       TZ: ${TZ:-America/New_York}
+    networks:
+      - default
+      # For push monitors from other stacks on this host (e.g. the weekly movie email): they join this
+      # network as external and push to http://uptime-kuma:3001/api/push/<token>, nothing published.
+      - kuma-push
     healthcheck:
       test: ["CMD-SHELL", "extra/healthcheck"]
       interval: 60s
       timeout: 30s
       start_period: 180s
       retries: 5
+
+networks:
+  # Created by this stack under a fixed name, so other compose projects can declare it external.
+  kuma-push:
+    name: kuma-push
