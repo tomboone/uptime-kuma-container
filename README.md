@@ -10,14 +10,14 @@ This is not the business Uptime Kuma, which runs next to it (`neuroticsasquat-ch
 `127.0.0.1:3002` personal) and tailnets. The host itself is on no tailnet.
 
 Until 2026-10-17 this Kuma ran on Azure App Service with its database on an Azure Files share. SQLite
-over SMB corrupted it, so it moved here. See the log. `Dockerfile`, `infra/` and `.github/workflows/`
-are the Azure deployment and go when it is retired.
+over SMB corrupted it, so it moved here and the Azure deployment was retired. See the log.
 
 | File | Purpose |
 | --- | --- |
 | `docker-compose.yml` | Two services. `tailscale`: `tailscale/tailscale:stable` as tailnet node `kuma`, userspace networking, state from `TS_STATE_HOST_DIR`, serving HTTPS on tailnet port 443. `uptime-kuma`: `louislam/uptime-kuma:1`, data from `KUMA_DATA_DIR`, publishing `127.0.0.1:3002` only. |
 | `tailscale/serve.json` | HTTPS on `:443` with a Tailscale certificate, proxied to `http://uptime-kuma:3001`. |
 | `.env.example` | The settings. Copy to `.env` (gitignored) on the host. |
+| `Taskfile.yml` | `task up`, `ps`, `logs`, `upgrade`, run on the host. |
 
 ## Deploy
 
@@ -98,3 +98,19 @@ suggests the database had been corrupt since mid-June.
   backup job over `127.0.0.1:3002`. Its earlier pushes never fired; see the navidrome repo's log.
 - **Azure.** The App Service `app-uptime-kuma-tbc` was **stopped**, not deleted. Its resources,
   including the corrupt share, stay until the retirement is confirmed.
+
+### 2026-10-17 — Azure retired
+
+The resource group `rg-uptime-kuma` (the App Service, the storage account and the corrupt share) was
+deleted by hand. `az group exists` returns `false`. The repo no longer holds the Azure deployment:
+`Dockerfile`, `infra/` (OpenTofu), the build and deploy workflows, `dependabot.yml` and the devcontainer
+are gone, and `Taskfile.yml` now wraps the compose stack. The workflows were deleted in the same commit
+that merged to `main`, so the merge triggered no build or `tofu apply`.
+
+Left outside the resource group, still to clear:
+
+- the OpenTofu state blob `uptime-kuma-container.tfstate` in `tbcterraformstate/tfstate` (resource group
+  `rg-tbc-app-services`). It still lists the deleted resources.
+- the GHCR image `ghcr.io/tomboone/uptime-kuma-container` (9 versions). Nothing pulls it any more.
+
+The power-restore unplug test on kumadrome also passed: pulled, plugged back, booted on its own.

@@ -1,45 +1,26 @@
 version: "3"
 
-vars:
-  IMAGE_NAME: uptime-kuma
-  CONTAINER_NAME: uptime-kuma-local
-
+# Run on kumadrome, from ~/kuma-personal. See README.md.
 tasks:
-  build:
-    desc: Build the Docker image locally
+  up:
+    desc: Start or update the stack
     cmds:
-      - docker build -t {{.IMAGE_NAME}} .
+      - docker compose up -d
 
-  run:
-    desc: Run the container locally
-    deps: [build]
+  ps:
+    desc: Show container state and health
     cmds:
-      - docker run -d --name {{.CONTAINER_NAME}} -p 3001:3001 -v uptime-kuma-data:/app/data {{.IMAGE_NAME}}
-
-  stop:
-    desc: Stop and remove the local container
-    cmds:
-      - docker rm -f {{.CONTAINER_NAME}}
+      - docker compose ps
 
   logs:
-    desc: Tail logs from the local container
+    desc: Tail Kuma's logs
     cmds:
-      - docker logs -f {{.CONTAINER_NAME}}
+      - docker compose logs -f uptime-kuma
 
-  tofu-init:
-    desc: Initialize OpenTofu
-    dir: infra
+  upgrade:
+    desc: Pull new images and recreate (take a backup first, see README)
     cmds:
-      - tofu init -backend-config=backend.hcl
-
-  tofu-plan:
-    desc: Run OpenTofu plan
-    dir: infra
-    cmds:
-      - tofu plan
-
-  tofu-apply:
-    desc: Apply OpenTofu changes
-    dir: infra
-    cmds:
-      - tofu apply
+      - git pull
+      - docker compose pull
+      - docker compose up -d
+      - docker image prune -f
