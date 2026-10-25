@@ -1,72 +1,22 @@
-# Personal Uptime Kuma
+# Personal Uptime Kuma — retired
 
-Uptime checks for the personal sites and jobs, plus the push monitor for kumadrome's nightly B2 backup.
-It runs in Docker on the home server `kumadrome` (a 2011 Mac mini, Ubuntu 26.04), with its SQLite
-database on the USB drive at `/mnt/music`. It is reachable on the **personal tailnet** only, at
-`https://kuma.tail1afe5a.ts.net`, through its own Tailscale sidecar container.
+**Retired on 2026-10-24.** This instance was merged into the Kuma deployed from
+[`neuroticsasquat-ch/ops`](https://github.com/neuroticsasquat-ch/ops), in
+[`monitoring/uptime-kuma`](https://github.com/neuroticsasquat-ch/ops/tree/main/monitoring/uptime-kuma).
+Nothing in this repo is deployed any more.
 
-This is not the business Uptime Kuma, which runs next to it (`neuroticsasquat-ch/ops`,
-`monitoring/uptime-kuma/`). The two have separate stacks, data, ports (`127.0.0.1:3001` business,
-`127.0.0.1:3002` personal) and tailnets. The host itself is on no tailnet.
+- **URL:** `https://kuma.tail1afe5a.ts.net` is unchanged. The ops Kuma's sidecar took over the tailnet
+  node name `kuma` in the 2026-10-25 cutover.
+- **Monitors:** 8 of the 9 moved in the merge. The ninth, `argelander`, is recreated in the ops Kuma by
+  its kumadrome-apps runbook.
+- **Push URLs on kumadrome:** `http://127.0.0.1:3001/api/push/<token>` from the host (was `:3002`), or
+  `http://uptime-kuma:3001/api/push/<token>` from containers over the `kuma-push` network, which the
+  ops stack now creates.
+- **Old data:** `/mnt/music/uptime-kuma-personal` is deleted in the ops teardown runbook.
 
-Until 2026-10-17 this Kuma ran on Azure App Service with its database on an Azure Files share. SQLite
-over SMB corrupted it, so it moved here and the Azure deployment was retired. See the log.
-
-| File | Purpose |
-| --- | --- |
-| `docker-compose.yml` | Two services. `tailscale`: `tailscale/tailscale:stable` as tailnet node `kuma`, userspace networking, state from `TS_STATE_HOST_DIR`, serving HTTPS on tailnet port 443. `uptime-kuma`: `louislam/uptime-kuma:1`, data from `KUMA_DATA_DIR`, publishing `127.0.0.1:3002` only. |
-| `tailscale/serve.json` | HTTPS on `:443` with a Tailscale certificate, proxied to `http://uptime-kuma:3001`. |
-| `.env.example` | The settings. Copy to `.env` (gitignored) on the host. |
-| `Taskfile.yml` | `task up`, `ps`, `logs`, `upgrade`, run on the host. |
-
-## Deploy
-
-On the host, as `tom` (in the `docker` group):
-
-```bash
-# read-only deploy key behind a host alias (~/.ssh/config: github-kuma → github.com, ~/.ssh/kuma_personal_deploy)
-git clone git@github-kuma:tomboone/uptime-kuma-container.git ~/kuma-personal
-cd ~/kuma-personal
-mkdir -p /mnt/music/uptime-kuma-personal /mnt/music/uptime-kuma-personal-tailscale
-cp .env.example .env && chmod 600 .env && $EDITOR .env   # TS_AUTHKEY from the personal tailnet
-docker compose up -d
-```
-
-1. `docker compose exec tailscale tailscale status | head -1` shows `kuma`, and
-   `docker compose exec tailscale tailscale serve status` shows `https://kuma.<tailnet>.ts.net`
-   → `http://uptime-kuma:3001`.
-2. Blank `TS_AUTHKEY=` in `.env`. In the personal tailnet's *Machines*, choose *Disable key expiry*
-   on `kuma`.
-3. `docker compose ps` shows `kuma-personal` as `(healthy)`. `ss -ltn | grep 3002` lists only
-   `127.0.0.1:3002`.
-
-**Push URLs from jobs on this host** use `http://127.0.0.1:3002/api/push/<token>`, not the tailnet URL,
-because the host is on no tailnet. **Push URLs from other containers** use `http://uptime-kuma:3001/api/push/<token>`
-over the `kuma-push` network, which this stack creates. The other stack declares it `external`. The weekly movie
-email does this.
-
-## Backup
-
-Everything is in `KUMA_DATA_DIR`, chiefly `kuma.db`. **Nightly:** the B2 job in `tomboone/navidrome`
-(`backup/navidrome-backup.sh`, `KUMA_DB`) takes an online-backup copy at about 04:00. The copy is
-integrity-checked and gzipped into `/mnt/music/uptime-kuma-personal-backups` (14 days kept) and synced
-to `b2:tomboone-music-backup/kuma-personal-backups`. **By hand**, SQLite's online backup API makes a
-consistent copy while Kuma runs:
-
-```bash
-sqlite3 /mnt/music/uptime-kuma-personal/kuma.db ".backup '/mnt/music/kuma-personal-$(date +%F).db'"
-```
-
-**Restore:** `docker compose stop uptime-kuma`, delete `kuma.db-wal` and `kuma.db-shm`, put the copy in
-place as `kuma.db`, then `docker compose start uptime-kuma`.
-
-## Upgrade
-
-```bash
-cd ~/kuma-personal && git pull
-docker compose pull && docker compose up -d
-docker image prune -f
-```
+The other files are kept for history. The README as it stood before retirement, with the deploy,
+backup and upgrade steps, is at
+[`75ceaa0`](https://github.com/tomboone/uptime-kuma-container/blob/75ceaa02e7e6fb2098b4a61c98073358da4b18a9/README.md).
 
 ## Log
 
@@ -116,3 +66,10 @@ Left outside the resource group, still to clear:
 - the GHCR image `ghcr.io/tomboone/uptime-kuma-container` (9 versions). Nothing pulls it any more.
 
 The power-restore unplug test on kumadrome also passed: pulled, plugged back, booted on its own.
+
+### 2026-10-24 — Retired
+
+The ops Kuma took over this instance's monitors in its merge-prep runbook (`docs/runbooks/kuma-merge.md`
+in `neuroticsasquat-ch/ops`, NEU-1938). The stack was brought down and `kuma-push` moved to the ops stack.
+The README was cut down to the retirement notice above (NEU-1955); the repo is archived in the ops
+teardown runbook.
